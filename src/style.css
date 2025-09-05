@@ -1,8 +1,14 @@
+/* seteo las variables por si quiero reutilizarlas */
+:root {
+  --font-heading: 'Unbounded', sans-serif;
+  --font-body: 'Be Vietnam Pro', sans-serif;
+}
+
 body {
+  font-family: var(--font-body);
   margin: 0;
   background: #0d0d0d;
   color: white;
-  font-family: 'Inter', sans-serif;
 }
 
 .page {
@@ -14,7 +20,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4rem;
+  margin-bottom: 2rem;
 }
 
 header .logo {
@@ -30,6 +36,7 @@ header .logo {
 }
 
 .category-buttons button {
+  font-family: var(--font-body);
   background: none;
   border: none;
   color: white;
@@ -45,15 +52,18 @@ header .logo {
   text-decoration: underline;
 }
 
-h1 {
-  font-size: 1.8rem;
-  font-weight: 500;
-  margin-bottom: 2rem;
+h1 { /*titulo principal*/
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.2rem;
+  max-width: 35%;
+  margin: 0 auto 2rem auto;
+  text-align: center;
 }
 
 .card {
-  width: 260px;
-  height: 400px;
+  width: 180px;
+  height: 270px;
   margin: 0 auto;
   background-color: #1a1a1a;
   border-radius: 1.5rem;
@@ -72,8 +82,7 @@ h1 {
 
 #recommendations {
   display: flex;
-  gap: 2rem;
-  overflow-x: auto;
+  overflow-x: auto; /*aca estoy */
   padding: 1rem 0;
   scroll-snap-type: x mandatory;
 }
