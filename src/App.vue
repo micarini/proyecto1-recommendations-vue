@@ -16,9 +16,9 @@
 
     <h1>my personal list of recommendations</h1>
 
-    <div id="recommendation">
+    <div id="recommendation"> 
       <RecommendationCard
-        v-for="(item, index) in recommendations"
+        v-for="(item, index) in recommendations" 
         :key="index"
         :title="item.title"
         :overview="item.overview"
@@ -38,6 +38,7 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 //watch() es una función de Vue que sirve para "escuchar" cambios en variables reactivas y ejecutar acciones (como recargar recomendaciones cuando cambia la categoría).
 import RecommendationCard from './components/RecommendationCard.vue' // importo el componente de tarjeta de recomendación (con imagen, título, descripción).
 import { searchTMDB } from './utils/tmdb.js' //importo la funcion que consulta la API de TMDB.
+import { searchSpotifyAlbum } from './utils/spotify.js' //importo la funcion que consulta la API de Spotify.
 
 export default { 
   components: {
@@ -73,16 +74,33 @@ export default {
     const loadRecommendations = async () => {
       recommendations.value = [] //limpio lo anterior
 
-      for (const item of currentList.value) { //recorro la lista de recomendaciones
-        const result = await searchTMDB(item.title, item.type) //llamo a la función que consulta la API de TMDB, le paso el título y el tipo (película o serie) y espero su resultado y lo guardo en la constante result
+      const shuffledList = [...currentList.value] //hago una copia de la lista actual (currentList) para mezclarla sin alterar el original
+      if (selectedCategory.value === 'all') { //si la categoría seleccionada es "all", mezclo la lista con el algoritmo de Fisher-Yates
+        for (let i = shuffledList.length - 1; i > 0; i--) { //recorro la lista desde el final hasta el principio
+          const j = Math.floor(Math.random() * (i + 1)) //genero un índice aleatorio entre 0 y i
+          ;[shuffledList[i], shuffledList[j]] = [shuffledList[j], shuffledList[i]] //intercambio los elementos en las posiciones i y j
+        }
+      } //entonces, estoy haciendo un shuffle usando Fisher-Yates que se basa en mezclar elementos de forma que todos los órdenes posibles tengan la misma probabilidad de ocurrir 
+
+      for (const item of shuffledList) { //recorro la lista de recomendaciones mezclada
+        let result // declaro la variable result como un let porque su valor va a cambiar
+        if (item.type === 'music') {
+          result = await searchSpotifyAlbum(item.title)
+        } else {
+          result = await searchTMDB(item.title, item.type) //llamo a la función que consulta la API de TMDB, le paso el título y el tipo (película o serie) y espero su resultado y lo guardo en la constante result
+        }
+
         if (result) {
           recommendations.value.push({
-            title: result.name || result.title,
+            title: result.title,
             overview: result.overview,
-            img: 'https://image.tmdb.org/t/p/w500' + result.poster_path
+            img: item.type === 'music'
+            ? result.img //para Spotify
+            : 'https://image.tmdb.org/t/p/w500' + result.poster_path //para TMDB
           })
         }
       }
+      
     }
 
     onMounted(async () => {
