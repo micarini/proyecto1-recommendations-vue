@@ -32,7 +32,6 @@ header .logo {
   display: flex;
   justify-content: center;
   gap: 1rem;
-  margin-bottom: 2rem;
 }
 
 .category-buttons button {
@@ -40,7 +39,7 @@ header .logo {
   background: none;
   border: none;
   color: white;
-  font-size: 1rem;
+  font-size: 0.8rem;
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.3s;
@@ -61,7 +60,26 @@ h1 { /*titulo principal*/
   text-align: center;
 }
 
+#recommendation {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  scroll-behavior: smooth;
+}
+
+#recommendation::-webkit-scrollbar {
+  display: none;
+}
+
 .card {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0.6;
+  transform: scale(0.9);
   width: 180px;
   height: 270px;
   margin: 0 auto;
@@ -74,20 +92,21 @@ h1 { /*titulo principal*/
   justify-content: flex-start;
 }
 
+.card--active {
+  transform: scale(1.2);
+  opacity: 1;
+  z-index: 2;
+  margin: 2rem;
+}
+
+.card--small {
+  opacity: 0.6;
+  transform: scale(0.9);
+}
+
 .card img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-#recommendations {
-  display: flex;
-  overflow-x: auto; /*aca estoy */
-  padding: 1rem 0;
-  scroll-snap-type: x mandatory;
-}
-
-.card {
-  flex: 0 0 auto;
-  scroll-snap-align: center;
-}

@@ -16,20 +16,24 @@
 
     <h1>my personal list of recommendations</h1>
 
-    <div id="recommendations">
+    <div id="recommendation">
       <RecommendationCard
         v-for="(item, index) in recommendations"
         :key="index"
         :title="item.title"
         :overview="item.overview"
         :img="item.img"
+        :isActive="activeIndex === index"
       />
     </div>
+    
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from 'vue' //ref crea variables reactivas que actualizan la vista automaticamente mientras que onMounted corre una función cuando el componente se monta, o sea, cuando se muestra en la pantalla por primera vez. 
+import { ref, reactive, onMounted, computed, watch } from 'vue'
+//ref crea variables reactivas que actualizan la vista automaticamente mientras que onMounted corre una función cuando el componente se monta, o sea, cuando se muestra en la pantalla por primera vez. 
+//reactive crea un objeto reactivo que puede contener múltiples propiedades y ser observado por Vue para detectar cambios (para que fullContent sea un objeto modificable dinamicamente).
 // computed es una función que te permite crear propiedades derivadas a partir de otras reactivas. Es decir, no almacena datos directamente, sino que calcula un valor automáticamente basado en otras variables (como ref o reactive)
 //watch() es una función de Vue que sirve para "escuchar" cambios en variables reactivas y ejecutar acciones (como recargar recomendaciones cuando cambia la categoría).
 import RecommendationCard from './components/RecommendationCard.vue' // importo el componente de tarjeta de recomendación (con imagen, título, descripción).
@@ -40,32 +44,23 @@ export default {
     RecommendationCard //registro localmente recommendationcard
   },
   setup() {
-    const selectedCategory = ref('tv')
+    const selectedCategory = ref('movies')
 
     const categories = {
-      tv: 'TV Shows',
       movies: 'Movies',
+      tv: 'TV Shows',
       music: 'Music',
       all: 'All'
     }
 
-    const fullContent = {
-      tv: [
-        { title: "Arcane", type: "tv" },
-        { title: "Adults", type: "tv" },
-        { title: "Derry Girls", type: "tv" },
-        { title: "Julie & The Phantoms", type: "tv" },
-        { title: "Grace & Frankie", type: "tv" }
-      ],
-      movies: [
-        // vacíos por ahora, pero listos para cuando agregues
-      ],
-      music: [
-        // futura integración
-      ]
-    }
+    const fullContent = reactive({
+      movies: [],
+      tv: [],
+      music: []
+    })
 
     const recommendations = ref([]) //array reactivo que va a contener las recomendaciones.
+    const activeIndex = ref(0)
 
     const currentList = computed(() => { //Devuelve la lista filtrada según la categoría seleccionada
       if (selectedCategory.value === 'all') {
@@ -90,7 +85,19 @@ export default {
       }
     }
 
-    onMounted(loadRecommendations)
+    onMounted(async () => {
+      const [movies, tv, music] = await Promise.all([ //esta promesa espera a que se carguen los tres archivos JSON antes de continuar.
+        import('./content/movies.json'),
+        import('./content/tv.json'),
+        import('./content/music.json')
+      ])
+
+      fullContent.movies = movies.default
+      fullContent.tv = tv.default
+      fullContent.music = music.default
+
+      await loadRecommendations()
+    })
 
     watch(selectedCategory, () => {
       loadRecommendations()
@@ -99,8 +106,9 @@ export default {
     return { 
       recommendations, //hago que la variable (recommendations) se pueda usar en el <template>. Sin esto, no podria hacer v-for="item in recommendations".
       selectedCategory,
-      categories 
-      } 
+      categories, 
+      activeIndex
+    } 
   }
 }
 </script>

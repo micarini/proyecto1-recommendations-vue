@@ -1,10 +1,6 @@
 <template>
-  <div class="card">
+  <div :class="['card', isActive ? 'card--active' : 'card--small']">
     <img :src="img" :alt="title" />
-    <div class="info">
-      <h2>{{ title }}</h2>
-      <p>{{ overview }}</p>
-    </div>
   </div>
 </template>
 
@@ -14,7 +10,10 @@ export default {
   props: {
     title: String,
     overview: String,
-    img: String
+    img: String,
+    isActive: Boolean
   }
 }
 </script>
+
+
