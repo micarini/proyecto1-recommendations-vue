@@ -16,16 +16,22 @@
 
     <h1>my personal list of recommendations</h1>
 
-    <div id="recommendation"> 
+  <div id="recommendation" ref="recommendationRef">
+    <div v-if="isLoading" class="loader">
+      <div class="spinner spinner--big"></div>
+    </div>
+    <div v-else-if="error" class="error">{{ error }}</div>
+    <template v-else>
       <RecommendationCard
-        v-for="(item, index) in recommendations" 
+        v-for="(item, index) in recommendations"
         :key="index"
         :title="item.title"
         :overview="item.overview"
         :img="item.img"
         :isActive="activeIndex === index"
       />
-    </div>
+    </template>
+  </div>
     
   </div>
 </template>
@@ -60,8 +66,11 @@ export default {
       music: []
     })
 
-    const recommendations = ref([]) //array reactivo que va a contener las recomendaciones.
-    const activeIndex = ref(0)
+  const recommendations = ref([]) //array reactivo que va a contener las recomendaciones.
+  const activeIndex = ref(0)
+  const isLoading = ref(false) // estado de carga
+  const error = ref(null) // estado de error
+  const recommendationRef = ref(null) // referencia al contenedor de recomendaciones para manejar el scroll
 
     const currentList = computed(() => { //Devuelve la lista filtrada según la categoría seleccionada
       if (selectedCategory.value === 'all') {
@@ -72,60 +81,117 @@ export default {
     })
 
     const loadRecommendations = async () => {
-      recommendations.value = [] //limpio lo anterior
-
-      const shuffledList = [...currentList.value] //hago una copia de la lista actual (currentList) para mezclarla sin alterar el original
-      if (selectedCategory.value === 'all') { //si la categoría seleccionada es "all", mezclo la lista con el algoritmo de Fisher-Yates
-        for (let i = shuffledList.length - 1; i > 0; i--) { //recorro la lista desde el final hasta el principio
-          const j = Math.floor(Math.random() * (i + 1)) //genero un índice aleatorio entre 0 y i
-          ;[shuffledList[i], shuffledList[j]] = [shuffledList[j], shuffledList[i]] //intercambio los elementos en las posiciones i y j
+      isLoading.value = true
+      error.value = null
+      recommendations.value = [] //limpio las recomendaciones anteriores antes de cargar nuevas.
+      try {
+        const shuffledList = [...currentList.value] //creo una copia de la lista actual para mezclarla sin alterar el original.
+        if (selectedCategory.value === 'all') { //si la categoría es "all", mezclo la lista para que las recomendaciones sean variadas.
+          for (let i = shuffledList.length - 1; i > 0; i--) { //recorro la lista desde el final hasta el principio.
+            const j = Math.floor(Math.random() * (i + 1)) //genero un índice aleatorio entre 0 y i.
+            ;[shuffledList[i], shuffledList[j]] = [shuffledList[j], shuffledList[i]] //intercambio los elementos en las posiciones i y j.
+          } //entonces, estoy haciendo shuffle usando el algoritmo de Fisher-Yates que se basa en mezclar los elementos de un array de manera aleatoria.
         }
-      } //entonces, estoy haciendo un shuffle usando Fisher-Yates que se basa en mezclar elementos de forma que todos los órdenes posibles tengan la misma probabilidad de ocurrir 
-
-      for (const item of shuffledList) { //recorro la lista de recomendaciones mezclada
-        let result // declaro la variable result como un let porque su valor va a cambiar
-        if (item.type === 'music') {
-          result = await searchSpotifyAlbum(item.title)
-        } else {
-          result = await searchTMDB(item.title, item.type) //llamo a la función que consulta la API de TMDB, le paso el título y el tipo (película o serie) y espero su resultado y lo guardo en la constante result
+        for (const item of shuffledList) { //recorro cada item de la lista mezclada.
+          let result //variable para almacenar el resultado de la búsqueda como un let porque su valor va a cambiar
+          if (item.type === 'music') {
+            result = await searchSpotifyAlbum(item.title)
+          } else {
+            result = await searchTMDB(item.title, item.type, item.year || '') //si el item tiene año, lo uso, si no, paso cadena vacía.
+          }
+          if (result) {
+            recommendations.value.push({
+              title: result.title,
+              overview: result.overview,
+              img: item.type === 'music'
+                ? result.img //para Spotify
+                : 'https://image.tmdb.org/t/p/w500' + result.poster_path //para TMDB
+            })
+          }
         }
-
-        if (result) {
-          recommendations.value.push({
-            title: result.title,
-            overview: result.overview,
-            img: item.type === 'music'
-            ? result.img //para Spotify
-            : 'https://image.tmdb.org/t/p/w500' + result.poster_path //para TMDB
-          })
-        }
+      } catch (e) { //si hay un error en la carga de recomendaciones, lo capturo y muestro un mensaje.
+        error.value = 'There\'s been an error loading recommendations.'
+        console.error(e) //tambien imprimo el error en la consola para depuración.
+      } finally { //finally se ejecuta siempre, haya habido error o no.
+        isLoading.value = false //indico que la carga ha terminado.
       }
-      
     }
-
-    onMounted(async () => {
-      const [movies, tv, music] = await Promise.all([ //esta promesa espera a que se carguen los tres archivos JSON antes de continuar.
-        import('./content/movies.json'),
-        import('./content/tv.json'),
-        import('./content/music.json')
-      ])
-
-      fullContent.movies = movies.default
-      fullContent.tv = tv.default
-      fullContent.music = music.default
-
-      await loadRecommendations()
-    })
 
     watch(selectedCategory, () => {
       loadRecommendations()
     })
 
+    // si el usuario llega a un extremo, reposicionamos el scroll al centro
+    const checkAndLoopScroll = () => {
+      const container = recommendationRef.value
+      if (!container) return //si no hay contenedor, salgo de la función
+      const cardWidth = container.querySelector('.card')?.offsetWidth || 0 //obtengo el ancho de una tarjeta, si no hay tarjetas, cardWidth es 0
+      const totalCards = recommendations.value.length 
+      if (totalCards < 2) return //si hay menos de 2 tarjetas, no hago nada
+      // si está muy a la izquierda, lo mandamos al centro
+      if (container.scrollLeft < cardWidth) {
+        container.scrollLeft += cardWidth * totalCards
+      }
+      // si está muy a la derecha, lo mandamos al centro
+      if (container.scrollLeft > cardWidth * (totalCards * 2 - 1)) {
+        container.scrollLeft -= cardWidth * totalCards
+      }
+    }
+
+    // detecta la tarjeta más centrada al hacer scroll
+    const onScroll = () => {
+      const container = recommendationRef.value
+      if (!container) return; // si no hay contenedor, salgo de la función
+      const cards = container.querySelectorAll('.card') // obtengo todas las tarjetas
+      if (!cards.length) return; // si no hay tarjetas, salgo de la función
+      const containerRect = container.getBoundingClientRect() // obtengo las dimensiones del contenedor
+      let minDist = Infinity;
+      let closest = 0; // índice de la tarjeta más cercana al centro
+      cards.forEach((card, idx) => { // recorro cada tarjeta y su índice
+        const cardRect = card.getBoundingClientRect() // obtengo las dimensiones de la tarjeta
+        const cardCenter = cardRect.left + cardRect.width / 2 // calculo el centro de la tarjeta respecto al viewport
+        const containerCenter = containerRect.left + containerRect.width / 2 // calculo el centro del contenedor respecto al viewport
+        const dist = Math.abs(cardCenter - containerCenter) // Math.abs me da la distancia absoluta entre el centro de la tarjeta y el centro del contenedor (ignora si es negativa o positiva)
+        if (dist < minDist) {
+          minDist = dist
+          closest = idx
+        }
+      })
+      activeIndex.value = closest
+    }
+
+    // Al cargar recomendaciones, centramos el scroll en la copia del medio
+    const centerScroll = () => {
+      const container = recommendationRef.value
+      if (!container) return
+      container.scrollLeft = 0
+    }
+
+    onMounted(async () => {
+      const [movies, tv, music] = await Promise.all([
+        import('./content/movies.json'),
+        import('./content/tv.json'),
+        import('./content/music.json')
+      ])
+      fullContent.movies = movies.default
+      fullContent.tv = tv.default
+      fullContent.music = music.default
+      await loadRecommendations()
+      // Agregar listener de scroll
+      if (recommendationRef.value) {
+        recommendationRef.value.addEventListener('scroll', onScroll)
+      }
+    })
+
+    //el return final sirve para que vue pueda acceder a estas variables y funciones en el template.
     return { 
-      recommendations, //hago que la variable (recommendations) se pueda usar en el <template>. Sin esto, no podria hacer v-for="item in recommendations".
+      recommendations, 
       selectedCategory,
       categories, 
-      activeIndex
+      activeIndex,
+      isLoading,
+      error,
+      recommendationRef
     } 
   }
 }
