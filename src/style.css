@@ -13,7 +13,6 @@ body {
 
 .page {
   padding: 2rem;
-  text-align: center;
 }
 
 header {
@@ -139,4 +138,26 @@ h1 { /*titulo principal*/
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+
+/*MEDIA QUERIES PARA MOBILE*/
+@media (max-width: 600px) {
+  h1 {
+    max-width: 70vw;
+    margin-top: 5rem;
+    font-size: 1.4rem;
+  }
+  .card {
+    width: 80vw;
+    max-width: 320px;
+    height: calc(80vw * 1.5);
+    max-height: 480px;
+  }
+  .card--active {
+    transform: scale(1.08);
+  }
+  .img-wrapper {
+    padding-bottom: calc(80vw * 1.5);
+  }
 }
