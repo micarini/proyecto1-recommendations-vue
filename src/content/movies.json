@@ -4,5 +4,11 @@
   { "title": "Portrait of a Lady on Fire", "type": "movie" },
   { "title": "Pride & Prejudice", "type": "movie" },
   { "title": "Straume", "type": "movie" },
-  { "title": "KPop Demon Hunters", "type": "movie" }
+  { "title": "KPop Demon Hunters", "type": "movie" },
+  { "title": "Sabrina", "type": "movie", "year": "1954" },
+  { "title": "The Royal Tenenbaums", "type": "movie" },
+  { "title": "The Grand Budapest Hotel", "type": "movie" },
+  { "title": "Before Sunset", "type": "movie" },
+  { "title": "Thelma & Louise", "type": "movie" },
+  { "title": "Atonement", "type": "movie" }
 ]

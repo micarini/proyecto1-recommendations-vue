@@ -145,13 +145,13 @@ h1 { /*titulo principal*/
 @media (max-width: 600px) {
   h1 {
     max-width: 70vw;
-    margin-top: 5rem;
+    margin-top: 3rem;
     font-size: 1.4rem;
   }
   .card {
-    width: 80vw;
-    max-width: 320px;
-    height: calc(80vw * 1.5);
+    width: 60vw;
+    max-width: 280px;
+    height: calc(60vw * 1.5);
     max-height: 480px;
   }
   .card--active {

@@ -21,14 +21,14 @@
       <div class="spinner spinner--big"></div>
     </div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <template v-else>
+    <template v-else> 
       <RecommendationCard
-        v-for="(item, index) in recommendations"
-        :key="index"
+        v-for="(item, idx) in renderedRecommendations"
+        :key="item._realIndex ?? idx"
         :title="item.title"
         :overview="item.overview"
         :img="item.img"
-        :isActive="activeIndex === index"
+        :isActive="idx === paddedItems"
       />
     </template>
   </div>
@@ -68,6 +68,20 @@ export default {
 
   const recommendations = ref([]) //array reactivo que va a contener las recomendaciones.
   const activeIndex = ref(0)
+  const paddedItems = 4 // cantidad de items a mostrar a cada lado del activo
+
+  // computed para el slider infinito
+  const renderedRecommendations = computed(() => { 
+    const arr = recommendations.value
+    const output = []
+    if (!arr.length) return output
+    for (let i = activeIndex.value - paddedItems; i <= activeIndex.value + paddedItems; i++) {
+      const realIndex = (i + arr.length) % arr.length
+      output.push({ ...arr[realIndex], _realIndex: realIndex })
+    }
+    return output
+  })
+
   const isLoading = ref(false) // estado de carga
   const error = ref(null) // estado de error
   const recommendationRef = ref(null) // referencia al contenedor de recomendaciones para manejar el scroll
@@ -138,33 +152,63 @@ export default {
       }
     }
 
-    // detecta la tarjeta más centrada al hacer scroll
+    // Debounce helpers
+    let scrollTimeout = null;
+    let isUserScrolling = false;
+
+    // Detecta la tarjeta más centrada al hacer scroll y hace loop infinito visual solo cuando el scroll se detiene
     const onScroll = () => {
-      const container = recommendationRef.value
-      if (!container) return; // si no hay contenedor, salgo de la función
-      const cards = container.querySelectorAll('.card') // obtengo todas las tarjetas
-      if (!cards.length) return; // si no hay tarjetas, salgo de la función
-      const containerRect = container.getBoundingClientRect() // obtengo las dimensiones del contenedor
-      let minDist = Infinity;
-      let closest = 0; // índice de la tarjeta más cercana al centro
-      cards.forEach((card, idx) => { // recorro cada tarjeta y su índice
-        const cardRect = card.getBoundingClientRect() // obtengo las dimensiones de la tarjeta
-        const cardCenter = cardRect.left + cardRect.width / 2 // calculo el centro de la tarjeta respecto al viewport
-        const containerCenter = containerRect.left + containerRect.width / 2 // calculo el centro del contenedor respecto al viewport
-        const dist = Math.abs(cardCenter - containerCenter) // Math.abs me da la distancia absoluta entre el centro de la tarjeta y el centro del contenedor (ignora si es negativa o positiva)
-        if (dist < minDist) {
-          minDist = dist
-          closest = idx
+      isUserScrolling = true;
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isUserScrolling = false;
+        const container = recommendationRef.value;
+        if (!container) return;
+        const cards = container.querySelectorAll('.card');
+        if (!cards.length) return;
+        const cardWidth = cards[0].offsetWidth;
+        const scrollLeft = container.scrollLeft;
+        const totalCards = recommendations.value.length;
+        // Detectar si el usuario llegó a un extremo visual y reposicionar el scroll SOLO si no está scrolleando
+        if (scrollLeft < cardWidth * 0.5) {
+          container.scrollLeft += cardWidth * totalCards;
         }
-      })
-      activeIndex.value = closest
+        if (scrollLeft > cardWidth * (totalCards + paddedItems * 2 - 0.5)) {
+          container.scrollLeft -= cardWidth * totalCards;
+        }
+        // Actualizar el índice activo según la tarjeta más centrada
+        const containerRect = container.getBoundingClientRect();
+        let minDist = Infinity;
+        let closest = 0;
+        cards.forEach((card, idx) => {
+          const cardRect = card.getBoundingClientRect();
+          const cardCenter = cardRect.left + cardRect.width / 2;
+          const containerCenter = containerRect.left + containerRect.width / 2;
+          const dist = Math.abs(cardCenter - containerCenter);
+          if (dist < minDist) {
+            minDist = dist;
+            closest = idx;
+          }
+        });
+        // El central siempre es paddedItems
+        activeIndex.value = (activeIndex.value + (closest - paddedItems) + totalCards) % totalCards;
+        // Snap al centro de la card más cercana
+        container.scrollTo({
+          left: cardWidth * (closest),
+          behavior: 'smooth'
+        });
+      }, 120); // 120ms debounce
     }
 
-    // Al cargar recomendaciones, centramos el scroll en la copia del medio
+    // Al cargar recomendaciones, centramos el scroll en la tarjeta central
     const centerScroll = () => {
       const container = recommendationRef.value
       if (!container) return
-      container.scrollLeft = 0
+      const cards = container.querySelectorAll('.card')
+      if (!cards.length) return
+      const cardWidth = cards[0].offsetWidth
+      // Centrar en la tarjeta central
+      container.scrollLeft = cardWidth * paddedItems
     }
 
     onMounted(async () => {
@@ -180,6 +224,8 @@ export default {
       // Agregar listener de scroll
       if (recommendationRef.value) {
         recommendationRef.value.addEventListener('scroll', onScroll)
+        // Centrar el scroll al inicio
+        setTimeout(centerScroll, 100)
       }
     })
 
@@ -191,8 +237,10 @@ export default {
       activeIndex,
       isLoading,
       error,
-      recommendationRef
-    } 
+      recommendationRef,
+      renderedRecommendations,
+      paddedItems
+    }
   }
 }
 </script>

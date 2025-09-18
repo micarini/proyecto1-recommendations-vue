@@ -6,5 +6,12 @@
     { "title": "Julie & The Phantoms", "type": "tv" },
     { "title": "Grace & Frankie", "type": "tv" },
     { "title": "Percy Jackson", "type": "tv" },
-    { "title": "Once Upon a Time", "type": "tv", "year": "2011" }
+    { "title": "Once Upon a Time", "type": "tv", "year": "2011" },
+    { "title": "Fleabag", "type": "tv" },
+    { "title": "Sex & The City", "type": "tv" },
+    { "title": "Sherlock", "type": "tv" },
+    { "title": "Dickinson", "type": "tv" },
+    { "title": "She-Ra and the Princesses of Power", "type": "tv" },
+    { "title": "Peaky Blinders", "type": "tv" },
+    { "title": "Daisy Jones & The Six", "type": "tv" }
 ]
