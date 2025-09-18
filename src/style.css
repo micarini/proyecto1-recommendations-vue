@@ -100,7 +100,7 @@ h1 { /*titulo principal*/
 
 .card--small {
   opacity: 0.6;
-  transform: scale(0.8);
+  transform: scale(0.9);
 }
 
 .card img {
@@ -145,7 +145,7 @@ h1 { /*titulo principal*/
 @media (max-width: 600px) {
   h1 {
     max-width: 70vw;
-    margin-top: 3rem;
+    margin-top: 5rem;
     font-size: 1.4rem;
   }
   .card {
@@ -155,7 +155,7 @@ h1 { /*titulo principal*/
     max-height: 480px;
   }
   .card--active {
-    transform: scale(1.02);
+    transform: scale(1.08);
   }
   .img-wrapper {
     padding-bottom: calc(80vw * 1.5);

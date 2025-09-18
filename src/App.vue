@@ -99,35 +99,40 @@ export default {
       error.value = null
       recommendations.value = [] //limpio las recomendaciones anteriores antes de cargar nuevas.
       try {
-        const shuffledList = [...currentList.value] //creo una copia de la lista actual para mezclarla sin alterar el original.
-        if (selectedCategory.value === 'all') { //si la categoría es "all", mezclo la lista para que las recomendaciones sean variadas.
-          for (let i = shuffledList.length - 1; i > 0; i--) { //recorro la lista desde el final hasta el principio.
-            const j = Math.floor(Math.random() * (i + 1)) //genero un índice aleatorio entre 0 y i.
-            ;[shuffledList[i], shuffledList[j]] = [shuffledList[j], shuffledList[i]] //intercambio los elementos en las posiciones i y j.
-          } //entonces, estoy haciendo shuffle usando el algoritmo de Fisher-Yates que se basa en mezclar los elementos de un array de manera aleatoria.
-        }
-        for (const item of shuffledList) { //recorro cada item de la lista mezclada.
-          let result //variable para almacenar el resultado de la búsqueda como un let porque su valor va a cambiar
-          if (item.type === 'music') {
-            result = await searchSpotifyAlbum(item.title)
-          } else {
-            result = await searchTMDB(item.title, item.type, item.year || '') //si el item tiene año, lo uso, si no, paso cadena vacía.
-          }
-          if (result) {
-            recommendations.value.push({
-              title: result.title,
-              overview: result.overview,
-              img: item.type === 'music'
-                ? result.img //para Spotify
-                : 'https://image.tmdb.org/t/p/w500' + result.poster_path //para TMDB
-            })
+        const shuffledList = [...currentList.value] //clono la lista actual para no modificar el original
+        if (selectedCategory.value === 'all') { //si la categoría es "all", mezclo la lista para que no salgan siempre en el mismo orden
+          for (let i = shuffledList.length - 1; i > 0; i--) { //algoritmo de Fisher-Yates para mezclar un array
+            const j = Math.floor(Math.random() * (i + 1)) //número aleatorio entre 0 e i
+            ;[shuffledList[i], shuffledList[j]] = [shuffledList[j], shuffledList[i]] //intercambio los elementos en las posiciones i y j
           }
         }
-      } catch (e) { //si hay un error en la carga de recomendaciones, lo capturo y muestro un mensaje.
+        // hacer todas las búsquedas en paralelo para mayor velocidad
+        const results = await Promise.all( // Promise.all ejecuta múltiples promesas en paralelo y espera a que todas se resuelvan
+          shuffledList.map(item => {
+            if (item.type === 'music') {
+              return searchSpotifyAlbum(item.title)
+            } else {
+              return searchTMDB(item.title, item.type, item.year || '')
+            }
+          })
+        )
+        // armar recomendaciones solo con resultados válidos
+        recommendations.value = results.map((result, i) => {
+          const item = shuffledList[i]
+          if (!result) return null
+          return {
+            title: result.title,
+            overview: result.overview,
+            img: item.type === 'music'
+              ? result.img
+              : 'https://image.tmdb.org/t/p/w500' + result.poster_path
+          }
+        }).filter(Boolean) // filter(Boolean) elimina los nulls del array
+      } catch (e) {
         error.value = 'There\'s been an error loading recommendations.'
-        console.error(e) //tambien imprimo el error en la consola para depuración.
-      } finally { //finally se ejecuta siempre, haya habido error o no.
-        isLoading.value = false //indico que la carga ha terminado.
+        console.error(e) // imprime el error en la consola para depuración
+      } finally { // finally siempre se ejecuta al final del try-catch, haya habido error o no
+        isLoading.value = false //indica que la carga ha terminado
       }
     }
 
@@ -152,52 +157,40 @@ export default {
       }
     }
 
-    // Debounce helpers
-    let scrollTimeout = null;
-    let isUserScrolling = false;
-
-    // Detecta la tarjeta más centrada al hacer scroll y hace loop infinito visual solo cuando el scroll se detiene
+    // detecta la tarjeta más centrada al hacer scroll y hace loop infinito visual
     const onScroll = () => {
-      isUserScrolling = true;
-      if (scrollTimeout) clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        isUserScrolling = false;
-        const container = recommendationRef.value;
-        if (!container) return;
-        const cards = container.querySelectorAll('.card');
-        if (!cards.length) return;
-        const cardWidth = cards[0].offsetWidth;
-        const scrollLeft = container.scrollLeft;
-        const totalCards = recommendations.value.length;
-        // Detectar si el usuario llegó a un extremo visual y reposicionar el scroll SOLO si no está scrolleando
-        if (scrollLeft < cardWidth * 0.5) {
-          container.scrollLeft += cardWidth * totalCards;
+      const container = recommendationRef.value
+      if (!container) return; // si no hay contenedor, salgo de la función
+      const cards = container.querySelectorAll('.card') // obtengo todas las tarjetas
+      if (!cards.length) return; // si no hay tarjetas, salgo de la función
+      const cardWidth = cards[0].offsetWidth;
+      const scrollLeft = container.scrollLeft;
+      const totalCards = recommendations.value.length;
+      // Detectar si el usuario llegó a un extremo visual y reposicionar el scroll
+      // Si scrollea muy a la izquierda
+      if (scrollLeft < cardWidth * 0.5) {
+        container.scrollLeft += cardWidth * totalCards;
+      }
+      // Si scrollea muy a la derecha
+      if (scrollLeft > cardWidth * (totalCards + paddedItems * 2 - 0.5)) {
+        container.scrollLeft -= cardWidth * totalCards;
+      }
+      // Actualizar el índice activo según la tarjeta más centrada
+      const containerRect = container.getBoundingClientRect(); // obtengo las dimensiones y posición del contenedor
+      let minDist = Infinity;
+      let closest = 0; // índice de la tarjeta más cercana al centro
+      cards.forEach((card, idx) => { // recorro cada tarjeta y su índice
+        const cardRect = card.getBoundingClientRect(); // obtengo las dimensiones de la tarjeta
+        const cardCenter = cardRect.left + cardRect.width / 2; // calculo el centro de la tarjeta 
+        const containerCenter = containerRect.left + containerRect.width / 2; // calculo el centro del contenedor
+        const dist = Math.abs(cardCenter - containerCenter); // Math.abs me da la distancia absoluta entre el centro de la tarjeta y el centro del contenedor (absoluto pq ignora si es negativa o positiva)
+        if (dist < minDist) {
+          minDist = dist;
+          closest = idx;
         }
-        if (scrollLeft > cardWidth * (totalCards + paddedItems * 2 - 0.5)) {
-          container.scrollLeft -= cardWidth * totalCards;
-        }
-        // Actualizar el índice activo según la tarjeta más centrada
-        const containerRect = container.getBoundingClientRect();
-        let minDist = Infinity;
-        let closest = 0;
-        cards.forEach((card, idx) => {
-          const cardRect = card.getBoundingClientRect();
-          const cardCenter = cardRect.left + cardRect.width / 2;
-          const containerCenter = containerRect.left + containerRect.width / 2;
-          const dist = Math.abs(cardCenter - containerCenter);
-          if (dist < minDist) {
-            minDist = dist;
-            closest = idx;
-          }
-        });
-        // El central siempre es paddedItems
-        activeIndex.value = (activeIndex.value + (closest - paddedItems) + totalCards) % totalCards;
-        // Snap al centro de la card más cercana
-        container.scrollTo({
-          left: cardWidth * (closest),
-          behavior: 'smooth'
-        });
-      }, 120); // 120ms debounce
+      });
+      // El central siempre es paddedItems
+      activeIndex.value = (activeIndex.value + (closest - paddedItems) + totalCards) % totalCards;
     }
 
     // Al cargar recomendaciones, centramos el scroll en la tarjeta central
