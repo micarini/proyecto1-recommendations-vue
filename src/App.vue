@@ -22,14 +22,26 @@
     </div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <template v-else> 
-      <RecommendationCard
-        v-for="(item, idx) in renderedRecommendations"
-        :key="item._realIndex ?? idx"
-        :title="item.title"
-        :overview="item.overview"
-        :img="item.img"
-        :isActive="idx === paddedItems"
-      />
+      <section>
+        <div class="swiper" ref="recommendationRef">
+          <div class="swiper-wrapper">
+            <div
+              class="swiper-slide"
+              v-for="(item, idx) in recommendations"
+              :key="idx"
+            >
+              <RecommendationCard
+                :title="item.title"
+                :overview="item.overview"
+                :img="item.img"
+                
+              />
+            </div>
+          </div>
+        </div>
+        <div class="swiper-pagination"></div>
+      </section>
+      
     </template>
   </div>
     
@@ -37,7 +49,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 //ref crea variables reactivas que actualizan la vista automaticamente mientras que onMounted corre una función cuando el componente se monta, o sea, cuando se muestra en la pantalla por primera vez. 
 //reactive crea un objeto reactivo que puede contener múltiples propiedades y ser observado por Vue para detectar cambios (para que fullContent sea un objeto modificable dinamicamente).
 // computed es una función que te permite crear propiedades derivadas a partir de otras reactivas. Es decir, no almacena datos directamente, sino que calcula un valor automáticamente basado en otras variables (como ref o reactive)
@@ -67,20 +79,7 @@ export default {
     })
 
   const recommendations = ref([]) //array reactivo que va a contener las recomendaciones.
-  const activeIndex = ref(0)
-  const paddedItems = 4 // cantidad de items a mostrar a cada lado del activo
-
-  // computed para el slider infinito
-  const renderedRecommendations = computed(() => { 
-    const arr = recommendations.value
-    const output = []
-    if (!arr.length) return output
-    for (let i = activeIndex.value - paddedItems; i <= activeIndex.value + paddedItems; i++) {
-      const realIndex = (i + arr.length) % arr.length
-      output.push({ ...arr[realIndex], _realIndex: realIndex })
-    }
-    return output
-  })
+  // Swiper maneja el loop y el centrado, no se necesita lógica manual
 
   const isLoading = ref(false) // estado de carga
   const error = ref(null) // estado de error
@@ -140,70 +139,7 @@ export default {
       loadRecommendations()
     })
 
-    // si el usuario llega a un extremo, reposicionamos el scroll al centro
-    const checkAndLoopScroll = () => {
-      const container = recommendationRef.value
-      if (!container) return //si no hay contenedor, salgo de la función
-      const cardWidth = container.querySelector('.card')?.offsetWidth || 0 //obtengo el ancho de una tarjeta, si no hay tarjetas, cardWidth es 0
-      const totalCards = recommendations.value.length 
-      if (totalCards < 2) return //si hay menos de 2 tarjetas, no hago nada
-      // si está muy a la izquierda, lo mandamos al centro
-      if (container.scrollLeft < cardWidth) {
-        container.scrollLeft += cardWidth * totalCards
-      }
-      // si está muy a la derecha, lo mandamos al centro
-      if (container.scrollLeft > cardWidth * (totalCards * 2 - 1)) {
-        container.scrollLeft -= cardWidth * totalCards
-      }
-    }
-
-    // detecta la tarjeta más centrada al hacer scroll y hace loop infinito visual
-    const onScroll = () => {
-      const container = recommendationRef.value
-      if (!container) return; // si no hay contenedor, salgo de la función
-      const cards = container.querySelectorAll('.card') // obtengo todas las tarjetas
-      if (!cards.length) return; // si no hay tarjetas, salgo de la función
-      const cardWidth = cards[0].offsetWidth;
-      const scrollLeft = container.scrollLeft;
-      const totalCards = recommendations.value.length;
-      // Detectar si el usuario llegó a un extremo visual y reposicionar el scroll
-      // Si scrollea muy a la izquierda
-      if (scrollLeft < cardWidth * 0.5) {
-        container.scrollLeft += cardWidth * totalCards;
-      }
-      // Si scrollea muy a la derecha
-      if (scrollLeft > cardWidth * (totalCards + paddedItems * 2 - 0.5)) {
-        container.scrollLeft -= cardWidth * totalCards;
-      }
-      // Actualizar el índice activo según la tarjeta más centrada
-      const containerRect = container.getBoundingClientRect(); // obtengo las dimensiones y posición del contenedor
-      let minDist = Infinity;
-      let closest = 0; // índice de la tarjeta más cercana al centro
-      cards.forEach((card, idx) => { // recorro cada tarjeta y su índice
-        const cardRect = card.getBoundingClientRect(); // obtengo las dimensiones de la tarjeta
-        const cardCenter = cardRect.left + cardRect.width / 2; // calculo el centro de la tarjeta 
-        const containerCenter = containerRect.left + containerRect.width / 2; // calculo el centro del contenedor
-        const dist = Math.abs(cardCenter - containerCenter); // Math.abs me da la distancia absoluta entre el centro de la tarjeta y el centro del contenedor (absoluto pq ignora si es negativa o positiva)
-        if (dist < minDist) {
-          minDist = dist;
-          closest = idx;
-        }
-      });
-      // El central siempre es paddedItems
-      activeIndex.value = (activeIndex.value + (closest - paddedItems) + totalCards) % totalCards;
-    }
-
-    // Al cargar recomendaciones, centramos el scroll en la tarjeta central
-    const centerScroll = () => {
-      const container = recommendationRef.value
-      if (!container) return
-      const cards = container.querySelectorAll('.card')
-      if (!cards.length) return
-      const cardWidth = cards[0].offsetWidth
-      // Centrar en la tarjeta central
-      container.scrollLeft = cardWidth * paddedItems
-    }
-
+    // Swiper maneja el loop y el centrado, no se necesita lógica manual
     onMounted(async () => {
       const [movies, tv, music] = await Promise.all([
         import('./content/movies.json'),
@@ -214,25 +150,49 @@ export default {
       fullContent.tv = tv.default
       fullContent.music = music.default
       await loadRecommendations()
-      // Agregar listener de scroll
-      if (recommendationRef.value) {
-        recommendationRef.value.addEventListener('scroll', onScroll)
-        // Centrar el scroll al inicio
-        setTimeout(centerScroll, 100)
-      }
     })
+
+    // Inicializar Swiper cuando recommendations cambie y tenga datos
+    watch(recommendations, async (val) => {
+      if (val.length > 0) {
+        await nextTick();
+        if (window.Swiper && document.querySelector('.swiper')) {
+          new window.Swiper('.swiper', {
+            initialSlide: 0,
+            centeredSlides: true,
+            loop: true,
+            speed: 900,
+            grabCursor: true,
+            allowTouchMove: true,
+            effect: 'coverflow',
+            coverflowEffect: {
+              rotate: -10,
+              stretch: -45,
+              depth: 90,
+              modifier: 1,
+              slideShadows: true,
+            },
+            pagination: {
+              el: '.swiper-pagination',
+            },
+            breakpoints: {
+              0: { slidesPerView: 1, spaceBetween: 10 },
+              600: { slidesPerView: 3, spaceBetween: 10 },
+              900: { slidesPerView: 5, spaceBetween: 10 }
+            },
+          });
+        }
+      }
+    });
 
     //el return final sirve para que vue pueda acceder a estas variables y funciones en el template.
     return { 
       recommendations, 
       selectedCategory,
       categories, 
-      activeIndex,
       isLoading,
       error,
-      recommendationRef,
-      renderedRecommendations,
-      paddedItems
+      recommendationRef
     }
   }
 }
