@@ -1,14 +1,14 @@
 [
-  { "title": "Before Sunrise", "type": "movie", "reason": "Una pelicula que captura la magia de un encuentro casual y la conexion humana. La cinematografia y la quimica entre los personajes la hacen un 10/10"},
-  { "title": "Lost in Translation", "type": "movie", "reason": "" },
-  { "title": "Portrait of a Lady on Fire", "type": "movie" },
-  { "title": "Pride & Prejudice", "type": "movie" },
-  { "title": "Straume", "type": "movie" },
-  { "title": "KPop Demon Hunters", "type": "movie" },
-  { "title": "Sabrina", "type": "movie", "year": "1954" },
-  { "title": "The Royal Tenenbaums", "type": "movie" },
-  { "title": "The Grand Budapest Hotel", "type": "movie" },
-  { "title": "Before Sunset", "type": "movie" },
-  { "title": "Thelma & Louise", "type": "movie" },
-  { "title": "Atonement", "type": "movie" }
+  { "title": "Before Sunrise", "type": "movie", "reason": "Una pelicula que captura la magia de un encuentro casual y la conexion humana."},
+  { "title": "Lost in Translation", "type": "movie", "reason": "Explora la soledad y la desconexion. Tiene una estetica muy cuidada." },
+  { "title": "Portrait of a Lady on Fire", "type": "movie", "reason": "La cinematografia es totalmente impresionante. Algo distinto y cautivador." },
+  { "title": "Pride & Prejudice", "type": "movie", "reason": "Una adaptacion clasica que se convirtio en un referente y un clasico." },
+  { "title": "Straume", "type": "movie", "reason": "Un viaje visual a traves de paisajes impresionantes y una narrativa evocadora." },
+  { "title": "KPop Demon Hunters", "type": "movie", "reason": "Una mezcla divertida de cultura pop y elementos sobrenaturales." },
+  { "title": "Sabrina", "type": "movie", "year": "1954", "reason": "Una comedia romantica clasica con actuaciones memorables." },
+  { "title": "The Royal Tenenbaums", "type": "movie", "reason": "Una comedia dramatica sobre una familia disfuncional con un estilo visual unico." },
+  { "title": "The Grand Budapest Hotel", "type": "movie", "reason": "Una obra maestra de la comedia y el estilo visual." },
+  { "title": "Before Sunset", "type": "movie", "reason": "Una secuela que captura la esencia del paso del tiempo y profundiza en la conexión entre los personajes." },
+  { "title": "Thelma & Louise", "type": "movie", "reason": "Un poderoso relato sobre la amistad y la liberacion femenina." },
+  { "title": "Atonement", "type": "movie", "reason": "Una historia de amor y redencion con una narrativa compleja y visualmente impactante." }
 ]

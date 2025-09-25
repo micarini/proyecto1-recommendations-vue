@@ -32,6 +32,7 @@
               :img="item.img"
               :reason="item.reason || 'No reason provided'"
               :artist="item.artist || ''"
+              :canFlip="idx === activeSlideIndex"
             />
           </div>
         </div>
@@ -75,6 +76,7 @@ export default {
 
   const recommendations = ref([]) //array reactivo que va a contener las recomendaciones.
   // Swiper maneja el loop y el centrado, no se necesita lógica manual
+  const activeSlideIndex = ref(0) // índice de la slide activa
 
   const isLoading = ref(false) // estado de carga
   const error = ref(null) // estado de error
@@ -141,7 +143,7 @@ export default {
       loadRecommendations()
     })
 
-    // Swiper maneja el loop y el centrado, no se necesita lógica manual
+    // Swiper maneja el loop y el centrado
     onMounted(async () => {
       const [movies, tv, music] = await Promise.all([
         import('./content/movies.json'),
@@ -154,12 +156,12 @@ export default {
       await loadRecommendations()
     })
 
-    // Inicializar Swiper cuando recommendations cambie y tenga datos
+    // inicializar Swiper cuando recommendations cambie y tenga datos
     watch(recommendations, async (val) => {
       if (val.length > 0) {
-        await nextTick();
+        await nextTick(); //espera a que el DOM se actualice con las nuevas recomendaciones antes de inicializar Swiper
         if (window.Swiper && document.querySelector('.swiper')) {
-          new window.Swiper('.swiper', {
+          const swiper = new window.Swiper('.swiper', {
             initialSlide: 0,
             centeredSlides: true,
             loop: true,
@@ -167,22 +169,27 @@ export default {
             grabCursor: true,
             allowTouchMove: true,
             effect: 'coverflow',
-            coverflowEffect: {
+            coverflowEffect: { 
               rotate: -10,
-              stretch: -45,
+              stretch: -5,
               depth: 90,
               modifier: 1,
               slideShadows: true,
             },
             pagination: {
               el: '.swiper-pagination',
-              clickable: true,
+              clickable: true, // Permite hacer clic en los puntos de paginación para navegar a la slide correspondiente
             },
             breakpoints: {
               0: { slidesPerView: 1, spaceBetween: 10 },
               600: { slidesPerView: 3, spaceBetween: 10 },
               900: { slidesPerView: 5, spaceBetween: 10 }
             },
+            on: {
+              slideChange: function () { //funcion que se ejecuta cada vez que cambia la slide activa para usarla para saber cuál tarjeta puede girar
+                activeSlideIndex.value = this.realIndex;
+              }
+            }
           });
         }
       }
@@ -195,7 +202,8 @@ export default {
       categories, 
       isLoading,
       error,
-      recommendationRef
+      recommendationRef,
+      activeSlideIndex
     }
   }
 }

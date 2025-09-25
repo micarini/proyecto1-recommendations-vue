@@ -1,5 +1,5 @@
 <template>
-  <div :class="['card', { 'flipped': flipped }]" @click="flipCard">
+  <div :class="['card', { 'flipped': flipped }]" @click="canFlip ? flipCard() : null">
     <div class="front">
       <div class="img-wrapper">
         <div v-if="loading && !imgError" class="spinner"></div>
@@ -50,7 +50,11 @@ export default {
     overview: String,
     img: String,
     reason: String,
-    artist: String
+    artist: String,
+    canFlip: {
+      type: Boolean,
+      default: false
+    }
   },
   setup(props) {
     const loading = ref(true)
@@ -60,6 +64,14 @@ export default {
     const onError = () => { loading.value = false; imgError.value = true }
     const flipCard = () => { flipped.value = !flipped.value }
     watch(() => props.img, () => { loading.value = true; imgError.value = false })
+
+    // Auto-reseteo el flip cuando canFlip se vuelve false asi cualquier tarjeta que no este en el medio siempre muestra el frente
+    watch(() => props.canFlip, (newCanFlip) => {
+      if (!newCanFlip && flipped.value) {
+        flipped.value = false
+      }
+    })
+    
     return { loading, imgError, onLoad, onError, flipped, flipCard }
   }
 }
