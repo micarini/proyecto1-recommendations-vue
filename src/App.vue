@@ -1,7 +1,9 @@
 <template>
   <div class="page">
     <header>
-      <div class="logo">Logo</div>
+      <div class="logo">
+        <img src="/soli-blanco.png" alt="Logo" />
+      </div>
       <nav class="category-buttons">
         <button
           v-for="(label, key) in categories"

@@ -8,7 +8,7 @@ body {
   font-family: var(--font-body);
   margin: 0;
   background: #0d0d0d;
-  color: white;
+  color: #fafafa;
 }
 
 .page {
@@ -19,12 +19,16 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
 }
 
 header .logo {
   font-weight: bold;
   font-size: 1rem;
+}
+
+header .logo img {
+  height: 70px;
+  width: auto;
 }
 
 .category-buttons {
@@ -37,7 +41,7 @@ header .logo {
   font-family: var(--font-body);
   background: none;
   border: none;
-  color: white;
+  color: #fafafa;
   font-size: 0.8rem;
   cursor: pointer;
   opacity: 0.6;
@@ -226,7 +230,7 @@ h1 { /*titulo principal*/
   justify-content: center;
   transform: rotateY(180deg);
   background: #181818;
-  color: #fff;
+  color: #fafafa;
   padding: 1rem;
   box-sizing: border-box;
   z-index: 2;
@@ -280,7 +284,7 @@ h1 { /*titulo principal*/
   min-width: 80px;
 }
 .reason-text {
-  color: #fff;
+  color: #fafafa;
   font-size: 1.05rem;
   line-height: 1.5;
   text-align: center;
@@ -328,7 +332,7 @@ h1 { /*titulo principal*/
 @media (max-width: 600px) {
   h1 {
     max-width: 70vw;
-    margin-top: 5rem;
+    margin-top: 4rem;
     font-size: 1.4rem;
   }
   .card {
@@ -336,7 +340,7 @@ h1 { /*titulo principal*/
     max-width: 220px;
     height: calc(60vw * 1.5);
     max-height: 330px;
-    margin: 0 4px;
+    margin: 0 auto;
   }
   .card--active {
     transform: scale(1.08);
@@ -350,5 +354,6 @@ h1 { /*titulo principal*/
     height: calc(60vw * 1.5);
     max-height: 390px;
     transform: scale(1.05);
+    margin: 0 auto;
   }
 }
