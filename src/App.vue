@@ -47,7 +47,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
+import { ref, reactive, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
 //ref crea variables reactivas que actualizan la vista automaticamente mientras que onMounted corre una función cuando el componente se monta, o sea, cuando se muestra en la pantalla por primera vez. 
 //reactive crea un objeto reactivo que puede contener múltiples propiedades y ser observado por Vue para detectar cambios (para que fullContent sea un objeto modificable dinamicamente).
 // computed es una función que te permite crear propiedades derivadas a partir de otras reactivas. Es decir, no almacena datos directamente, sino que calcula un valor automáticamente basado en otras variables (como ref o reactive)
@@ -192,6 +192,32 @@ export default {
                 activeSlideIndex.value = this.realIndex;
               }
             }
+          });
+          
+          // navegación con teclado con throttle para suavidad
+          let isNavigating = false;
+          const handleKeydown = (event) => { 
+            if (isNavigating) return; // Prevenir navegación múltiple rápida
+            
+            if (event.key === 'ArrowLeft') { 
+              event.preventDefault();
+              isNavigating = true;
+              swiper.slidePrev();
+              setTimeout(() => { isNavigating = false; }, 900); // Tiempo del speed de Swiper
+            } else if (event.key === 'ArrowRight') {
+              event.preventDefault();
+              isNavigating = true;
+              swiper.slideNext();
+              setTimeout(() => { isNavigating = false; }, 900);
+            }
+          };
+          
+          // event listener para detectar las flechas izquierda y derecha
+          document.addEventListener('keydown', handleKeydown);
+          
+          // limpio el event listener para evitar fugas de memoria osea que se quede escuchando aunque el componente ya no esté en pantalla
+          onUnmounted(() => {
+            document.removeEventListener('keydown', handleKeydown);
           });
         }
       }
