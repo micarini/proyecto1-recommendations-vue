@@ -17,32 +17,27 @@
     <h1>my personal list of recommendations</h1>
 
   <div id="recommendation" ref="recommendationRef">
-    <div v-if="isLoading" class="loader">
-      <div class="spinner spinner--big"></div>
-    </div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <template v-else> 
-      <section>
-        <div class="swiper" ref="recommendationRef">
-          <div class="swiper-wrapper">
-            <div
-              class="swiper-slide"
-              v-for="(item, idx) in recommendations"
-              :key="idx"
-            >
-              <RecommendationCard
-                :title="item.title"
-                :overview="item.overview"
-                :img="item.img"
-                
-              />
-            </div>
+    <div v-if="error" class="error">{{ error }}</div>
+    <section class="recommendations-section">
+      <div class="swiper" ref="recommendationRef">
+        <div class="swiper-wrapper">
+          <div
+            class="swiper-slide"
+            v-for="(item, idx) in recommendations"
+            :key="idx"
+          >
+            <RecommendationCard
+              :title="item.title"
+              :overview="item.overview"
+              :img="item.img"
+              :reason="item.reason || 'No reason provided'"
+              :artist="item.artist || ''"
+            />
           </div>
         </div>
-        <div class="swiper-pagination"></div>
-      </section>
-      
-    </template>
+      </div>
+      <div class="swiper-pagination"></div>
+    </section>
   </div>
     
   </div>
@@ -85,7 +80,7 @@ export default {
   const error = ref(null) // estado de error
   const recommendationRef = ref(null) // referencia al contenedor de recomendaciones para manejar el scroll
 
-    const currentList = computed(() => { //Devuelve la lista filtrada según la categoría seleccionada
+    const currentList = computed(() => { //devuelve la lista filtrada según la categoría seleccionada
       if (selectedCategory.value === 'all') {
         return [...fullContent.tv, ...fullContent.movies, ...fullContent.music]
       }
@@ -115,16 +110,23 @@ export default {
             }
           })
         )
-        // armar recomendaciones solo con resultados válidos
+        // armar recomendaciones solo con resultados válidos y filtrar por artista si corresponde
         recommendations.value = results.map((result, i) => {
           const item = shuffledList[i]
           if (!result) return null
+          // Si es música y hay artista, filtrar por artista
+          if (item.type === 'music' && item.artist) {
+            if (!result.artist || result.artist.toLowerCase() !== item.artist.toLowerCase()) {
+              return null
+            }
+          }
           return {
             title: result.title,
             overview: result.overview,
             img: item.type === 'music'
               ? result.img
-              : 'https://image.tmdb.org/t/p/w500' + result.poster_path
+              : 'https://image.tmdb.org/t/p/w500' + result.poster_path,
+            reason: item.reason || ''
           }
         }).filter(Boolean) // filter(Boolean) elimina los nulls del array
       } catch (e) {
@@ -174,6 +176,7 @@ export default {
             },
             pagination: {
               el: '.swiper-pagination',
+              clickable: true,
             },
             breakpoints: {
               0: { slidesPerView: 1, spaceBetween: 10 },

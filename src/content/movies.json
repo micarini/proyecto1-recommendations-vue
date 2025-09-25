@@ -1,6 +1,6 @@
 [
-  { "title": "Before Sunrise", "type": "movie", "url": "", "description": ""},
-  { "title": "Lost in Translation", "type": "movie" },
+  { "title": "Before Sunrise", "type": "movie", "reason": "Una pelicula que captura la magia de un encuentro casual y la conexion humana. La cinematografia y la quimica entre los personajes la hacen un 10/10"},
+  { "title": "Lost in Translation", "type": "movie", "reason": "" },
   { "title": "Portrait of a Lady on Fire", "type": "movie" },
   { "title": "Pride & Prejudice", "type": "movie" },
   { "title": "Straume", "type": "movie" },

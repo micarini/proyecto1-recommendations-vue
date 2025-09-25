@@ -33,7 +33,8 @@ export async function searchSpotifyAlbum(albumTitle) {
     return {
       title: album.name,
       img: album.images?.[0]?.url || '',
-      overview: `Artista: ${album.artists[0].name} · Lanzamiento: ${album.release_date}`
+      overview: `Artista: ${album.artists[0].name} · Lanzamiento: ${album.release_date}`,
+      artist: album.artists[0]?.name || ''
     }
   } else {
     return null
